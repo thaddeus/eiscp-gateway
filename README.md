@@ -6,3 +6,5 @@ The eISCP Gateway is a slimmed down version of the [eISCP Intermediary](https://
 #### Configuration
 
 #### Usage
+
+See the [API documentation](API.md)
