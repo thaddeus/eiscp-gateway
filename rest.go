@@ -62,6 +62,10 @@ func GetProperty(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Got value", value)
 	}
 	w.Write([]byte(value))
+	getInt, err := strconv.Atoi(value)
+	if err == nil {
+		stats.Absolute("get." + property, int64(getInt))
+	}
 }
 
 func PostProperty(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +75,10 @@ func PostProperty(w http.ResponseWriter, r *http.Request) {
 	success := setProperty(property, value)
 	if success {
 		w.Write([]byte(strconv.FormatBool(success)))
+		postInt, err := strconv.Atoi(value)
+		if err == nil {
+			stats.Absolute("post." + property, int64(postInt))
+		}
 	}else{
 		w.Write([]byte(strconv.FormatBool(success)))
 	}

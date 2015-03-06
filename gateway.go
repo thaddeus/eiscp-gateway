@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"github.com/quipo/statsd"
 )
 
 // Command line flags
@@ -23,6 +24,7 @@ var defaultDevice string
 var devicePort int
 var defaultPort int
 var pollingRate int
+var statsdAddress string
 
 // Global socket
 var globalSocket *net.TCPConn
@@ -37,6 +39,8 @@ var properties = make(map[string]string)
 var sendCount int
 var recvCount int
 
+var stats *statsd.StatsdBuffer
+
 func main() {
 	fmt.Println("Starting eISCP (ethernet Integra Serial Communication Protocol) Gateway")
 	// Command line options
@@ -44,12 +48,26 @@ func main() {
 	flag.StringVar(&defaultDevice, "device", "127.0.0.1", "IP address of device to connect to")
 	flag.IntVar(&devicePort, "port", 60128, "port on device to commmunicate with")
 	flag.IntVar(&defaultPort, "serve", 3000, "port to host REST API on")
+	flag.StringVar(&statsdAddress, "statsd", "localhost:8125", "IP and Port of Statsd server")
+
 	// Now that we've defined our flags, parse them
 	flag.Parse()
 
 	if debug {
 		fmt.Println("Displaying debug output.")
 	}
+
+	if debug {
+		fmt.Println("Attempting connection to statsd")
+	}
+
+	// init
+    prefix := "eiscp-gateway."
+    statsdclient := statsd.NewStatsdClient(statsdAddress, prefix)
+    statsdclient.CreateSocket()
+    interval := time.Second * 2 // aggregate stats and flush every 2 seconds
+    stats = statsd.NewStatsdBuffer(interval, statsdclient)
+    defer stats.Close()
 
 	fmt.Println("Searching for device on port", devicePort, "at", defaultDevice)
 
