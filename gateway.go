@@ -20,6 +20,7 @@ import (
 
 // Command line flags
 var debug bool
+var statsEnabled bool
 var defaultDevice string
 var devicePort int
 var defaultPort int
@@ -45,6 +46,7 @@ func main() {
 	fmt.Println("Starting eISCP (ethernet Integra Serial Communication Protocol) Gateway")
 	// Command line options
 	flag.BoolVar(&debug, "debug", false, "enable verbose debugging")
+	flag.BoolVar(&statsEnabled, "stats", false, "enable stats collecting")
 	flag.StringVar(&defaultDevice, "device", "127.0.0.1", "IP address of device to connect to")
 	flag.IntVar(&devicePort, "port", 60128, "port on device to commmunicate with")
 	flag.IntVar(&defaultPort, "serve", 3000, "port to host REST API on")
@@ -57,17 +59,20 @@ func main() {
 		fmt.Println("Displaying debug output.")
 	}
 
-	if debug {
-		fmt.Println("Attempting connection to statsd")
-	}
+	
 
 	// init
     prefix := "eiscp-gateway."
     statsdclient := statsd.NewStatsdClient(statsdAddress, prefix)
-    statsdclient.CreateSocket()
-    interval := time.Second * 2 // aggregate stats and flush every 2 seconds
-    stats = statsd.NewStatsdBuffer(interval, statsdclient)
-    defer stats.Close()
+    if statsEnabled {
+    	if debug {
+			fmt.Println("Attempting connection to statsd")
+		}
+	    statsdclient.CreateSocket()
+	    interval := time.Second * 2 // aggregate stats and flush every 2 seconds
+	    stats = statsd.NewStatsdBuffer(interval, statsdclient)
+	    defer stats.Close()
+	}
 
 	fmt.Println("Searching for device on port", devicePort, "at", defaultDevice)
 
