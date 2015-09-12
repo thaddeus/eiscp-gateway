@@ -59,19 +59,17 @@ func main() {
 		fmt.Println("Displaying debug output.")
 	}
 
-	
-
 	// init
-    prefix := "eiscp-gateway."
-    statsdclient := statsd.NewStatsdClient(statsdAddress, prefix)
-    if statsEnabled {
-    	if debug {
-			fmt.Println("Attempting connection to statsd")
-		}
-	    statsdclient.CreateSocket()
-	    interval := time.Second * 2 // aggregate stats and flush every 2 seconds
-	    stats = statsd.NewStatsdBuffer(interval, statsdclient)
-	    defer stats.Close()
+  prefix := "eiscp-gateway."
+  statsdclient := statsd.NewStatsdClient(statsdAddress, prefix)
+  if statsEnabled {
+  	if debug {
+		fmt.Println("Attempting connection to statsd")
+	}
+    statsdclient.CreateSocket()
+    interval := time.Second * 2 // aggregate stats and flush every 2 seconds
+    stats = statsd.NewStatsdBuffer(interval, statsdclient)
+    defer stats.Close()
 	}
 
 	fmt.Println("Searching for device on port", devicePort, "at", defaultDevice)
