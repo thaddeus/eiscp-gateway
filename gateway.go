@@ -132,9 +132,9 @@ func connectDevice() {
 			if statsEnabled {
 				postInt, err := strconv.ParseInt(packetData, 16, 0)
 				if err == nil {
-					stats.Gauge(".update." + property, postInt)
+					stats.Gauge(".update." + packetType, postInt)
 					if debug {
-						fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Sending stat update", property, postInt)
+						fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Sending stat update", packetType, postInt)
 					}
 				}
 			}
