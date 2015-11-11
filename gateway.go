@@ -26,6 +26,7 @@ var devicePort int
 var defaultPort int
 var pollingRate int
 var statsdAddress string
+var statsdPrefix string
 
 // Global socket
 var globalSocket *net.TCPConn
@@ -51,6 +52,7 @@ func main() {
 	flag.IntVar(&devicePort, "port", 60128, "port on device to commmunicate with")
 	flag.IntVar(&defaultPort, "serve", 3000, "port to host REST API on")
 	flag.StringVar(&statsdAddress, "statsd", "localhost:8125", "IP and Port of Statsd server")
+	flag.StringVar(&statsdPrefix, "prefix", "eiscp", "A prefix prepended to all stats")
 
 	// Now that we've defined our flags, parse them
 	flag.Parse()
@@ -60,8 +62,7 @@ func main() {
 	}
 
 	// init
-  prefix := "eiscp-gateway."
-  statsdclient := statsd.NewStatsdClient(statsdAddress, prefix)
+  statsdclient := statsd.NewStatsdClient(statsdAddress, statsdPrefix)
   if statsEnabled {
   	if debug {
 		fmt.Println("Attempting connection to statsd")
@@ -128,6 +129,15 @@ func connectDevice() {
 				fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Packet:", packet, "received")
 			}
 			recvCount++
+			if statsEnabled {
+				postInt, err := strconv.ParseInt(packetData, 16, 0)
+				if err == nil {
+					stats.Gauge(".update." + property, postInt)
+					if debug {
+						fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Sending stat update", property, postInt)
+					}
+				}
+			}
 		}
 	}
 	disconnectFlag = false

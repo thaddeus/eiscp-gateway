@@ -63,9 +63,12 @@ func GetProperty(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte(value))
 	if statsEnabled {
-		getInt, err := strconv.Atoi(value)
+		getInt, err := strconv.ParseInt(value, 16, 0)
 		if err == nil {
-			stats.Absolute("get." + property, int64(getInt))
+			stats.Gauge(".get." + property, getInt)
+			if debug {
+				fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Sending stat get", property, getInt)
+			}
 		}
 	}
 }
@@ -78,9 +81,12 @@ func PostProperty(w http.ResponseWriter, r *http.Request) {
 	if success {
 		w.Write([]byte(strconv.FormatBool(success)))
 		if statsEnabled {
-			postInt, err := strconv.Atoi(value)
+			postInt, err := strconv.ParseInt(value, 16, 0)
 			if err == nil {
-				stats.Absolute("post." + property, int64(postInt))
+				stats.Gauge(".post." + property, postInt)
+				if debug {
+					fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Sending stat post", property, postInt)
+				}
 			}
 		}
 	}else{
