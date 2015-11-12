@@ -79,7 +79,9 @@ func main() {
 
 	// Do our device stuff here
 	go func() {
-    deviceLoop()
+		for true {
+	    deviceLoop()
+	  }
   }()
 
 	r := mux.NewRouter()
@@ -114,7 +116,7 @@ func stillAlive() {
 	time.Sleep(time.Second * 5)
 	if (time.Now().Unix() - lastMessage) > 6 {
 		if debug {
-			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Last message was more than 2 seconds ago")
+			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Last message was more than 6 seconds ago")
 		}
 		hesDeadJim = true
 	}
