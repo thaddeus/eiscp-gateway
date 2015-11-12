@@ -125,7 +125,7 @@ func connectDevice() {
 
 	for !disconnectFlag {
 		data := make([]byte, 1024)
-		deviceSocket.SetReadDeadline(time.Now().Add(time.Millisecond * 51))
+		//deviceSocket.SetReadDeadline(time.Now().Add(time.Millisecond * 51))
 		if debug {
 			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Waiting for data")
 		}
