@@ -133,6 +133,9 @@ func connectDevice() {
 		switch err := err.(type) {
 		case net.Error:
 			if err.Timeout() {
+				if debug {
+					fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Expected timeout")
+				}
 				// Timeout error, we expect this.
 			} else {
 				fmt.Println("Encountered unexpected error during main loop:", err)
