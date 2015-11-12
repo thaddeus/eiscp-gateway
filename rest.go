@@ -33,7 +33,7 @@ func PutDevice(w http.ResponseWriter, r *http.Request) {
 	defaultDevice = vars["ip"]
 	devicePort, _ = strconv.Atoi(vars["port"])
 
-	go connectDevice()
+	go deviceLoop()
 
 	w.WriteHeader(200)
 }

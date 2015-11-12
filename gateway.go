@@ -77,8 +77,10 @@ func main() {
 
 	fmt.Println("Searching for device on port", devicePort, "at", defaultDevice)
 
-	// Attempt to connect to default device
-	go connectDevice()
+	// Do our device stuff here
+	go func() {
+    deviceLoop()
+  }()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/kill", HandleKill) //Debug Function
@@ -109,8 +111,8 @@ func openConnection() (bool, *net.TCPConn) {
 }
 
 func stillAlive() {
-	time.Sleep(time.Second * 1)
-	if (time.Now().Unix() - lastMessage) > 2 {
+	time.Sleep(time.Second * 5)
+	if (time.Now().Unix() - lastMessage) > 6 {
 		if debug {
 			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Last message was more than 2 seconds ago")
 		}
@@ -118,7 +120,7 @@ func stillAlive() {
 	}
 }
 
-func connectDevice() {
+func deviceLoop() {
 	var deviceSocket *net.TCPConn
 	success := false
 	for !success {
@@ -128,12 +130,13 @@ func connectDevice() {
 			time.Sleep(time.Second)
 		}
 	}
+
 	// We seem to have succeeded. Continue.
 	globalSocket = deviceSocket
 
 	for !disconnectFlag {
 		data := make([]byte, 1024)
-		deviceSocket.SetReadDeadline(time.Now().Add(time.Second * 5))
+		deviceSocket.SetReadDeadline(time.Now().Add(time.Second * 10))
 		if debug {
 			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Waiting for data")
 		}
