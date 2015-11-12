@@ -115,7 +115,7 @@ func connectDevice() {
 			if err.Timeout() {
 				// Timeout error, we expect this.
 			} else {
-				// Unexpected net error
+				fmt.Println("Encountered unexpected error during main loop:", err)
 			}
 		default:
 			// No error?
