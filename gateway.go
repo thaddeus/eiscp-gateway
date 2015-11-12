@@ -91,17 +91,34 @@ func main() {
 	http.ListenAndServe(":" + strconv.Itoa(defaultPort), nil)
 }
 
-func connectDevice() {
+func openConnection() (bool, *net.TCPConn) {
 	deviceSocket, err := net.DialTCP("tcp4", nil, &net.TCPAddr{
 		IP:   net.ParseIP(defaultDevice),
 		Port: devicePort,
 	})
-
-	// Check for error
 	if err != nil {
 		fmt.Println("Error connecting to device", defaultDevice)
-		fmt.Println(err)
+		if debug {
+			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Detailed error message:", err)
+		}
+		return false, nil
 	}
+	return true, deviceSocket
+}
+
+func connectDevice() {
+	var deviceSocket *net.TCPConn
+	success := false
+	for !success {
+		success, deviceSocket = openConnection()
+		if !success {
+			fmt.Println("Connection failed, waiting and trying again")
+			time.Sleep(time.Second)
+		}
+	}
+	
+	// Check for error
+	
 
 	// We seem to have succeeded. Continue.
 	globalSocket = deviceSocket
