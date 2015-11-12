@@ -109,6 +109,9 @@ func connectDevice() {
 	for !disconnectFlag {
 		data := make([]byte, 1024)
 		deviceSocket.SetReadDeadline(time.Now().Add(time.Millisecond * 51))
+		if debug {
+			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Waiting for data")
+		}
 		read, err := deviceSocket.Read(data)
 		switch err := err.(type) {
 		case net.Error:
@@ -120,6 +123,7 @@ func connectDevice() {
 		default:
 			// No error?
 		}
+
 		packet, valid := processISCP(data[:read])
 		if valid {
 			packetType := packet[2:5]
