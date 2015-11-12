@@ -30,6 +30,8 @@ var statsdPrefix string
 
 // Global socket
 var globalSocket *net.TCPConn
+var lastMessage int64
+var hesDeadJim bool
 
 // Disconnection flag to end read loop
 var disconnectFlag bool
@@ -106,6 +108,16 @@ func openConnection() (bool, *net.TCPConn) {
 	return true, deviceSocket
 }
 
+func stillAlive() {
+	time.Sleep(time.Second * 1)
+	if (time.Now().Unix() - lastMessage) > 2 {
+		if debug {
+			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Last message was more than 2 seconds ago")
+		}
+		hesDeadJim = true
+	}
+}
+
 func connectDevice() {
 	var deviceSocket *net.TCPConn
 	success := false
@@ -116,16 +128,12 @@ func connectDevice() {
 			time.Sleep(time.Second)
 		}
 	}
-	
-	// Check for error
-	
-
 	// We seem to have succeeded. Continue.
 	globalSocket = deviceSocket
 
 	for !disconnectFlag {
 		data := make([]byte, 1024)
-		//deviceSocket.SetReadDeadline(time.Now().Add(time.Millisecond * 51))
+		deviceSocket.SetReadDeadline(time.Now().Add(time.Second * 5))
 		if debug {
 			fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Waiting for data")
 		}
@@ -133,32 +141,49 @@ func connectDevice() {
 		switch err := err.(type) {
 		case net.Error:
 			if err.Timeout() {
-				if debug {
-					fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Expected timeout")
+				if hesDeadJim {
+					// We checked stay alive on our last loop, and it appears we're dead
+					fmt.Println("Connection appears to be gone, closing.")
+					disconnectFlag = true
+					err := deviceSocket.Close()
+					if err != nil {
+						fmt.Println("Error closing socket")
+					}
+					hesDeadJim = false
+				}else{
+					// Check if our connection is timed out, or if the receiver is quiet
+					if debug {
+						fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: KeepAlive Check")
+					}
+					go message("!1PWRQSTN")
+					go stillAlive()
 				}
-				// Timeout error, we expect this.
 			} else {
 				fmt.Println("Encountered unexpected error during main loop:", err)
 			}
 		default:
-			// No error?
-		}
-
-		packet, valid := processISCP(data[:read])
-		if valid {
-			packetType := packet[2:5]
-			packetData := packet[5:]
-			properties[packetType] = packetData
+			// No error? Update when we got our last message
+			lastMessage = time.Now().Unix()
 			if debug {
-				fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Packet:", packet, "received")
+				fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Message received succesfully")
 			}
-			recvCount++
-			if statsEnabled {
-				postInt, err := strconv.ParseInt(packetData, 16, 0)
-				if err == nil {
-					stats.Gauge(".update." + packetType, postInt)
-					if debug {
-						fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Sending stat update", packetType, postInt)
+
+			packet, valid := processISCP(data[:read])
+			if valid {
+				packetType := packet[2:5]
+				packetData := packet[5:]
+				properties[packetType] = packetData
+				if debug {
+					fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Packet:", packet, "received")
+				}
+				recvCount++
+				if statsEnabled {
+					postInt, err := strconv.ParseInt(packetData, 16, 0)
+					if err == nil {
+						stats.Gauge(".update." + packetType, postInt)
+						if debug {
+							fmt.Println(time.Now().Format(time.StampMilli), "DEBUG: Sending stat update", packetType, postInt)
+						}
 					}
 				}
 			}
